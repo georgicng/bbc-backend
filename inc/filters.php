@@ -39,6 +39,7 @@ return [
         return $payload;
     },
     'response.products.get' => function ($payload) use ($app) {
+        //add query result count to product meta for pagination
         $params = $app->request()->get();
         $single = ArrayUtils::has($params, 'id') || ArrayUtils::has($params, 'single');
         if (!$single && ArrayUtils::get($params, 'filters')) {

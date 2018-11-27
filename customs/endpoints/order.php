@@ -57,7 +57,7 @@ $app->post(
                 'order_id' => $orderID
             ];
             if ($tableGateway->delete($condition)) {
-                            //save order items
+                //save order items
                 $items = $payload['cart'];
                 
                 foreach ($items as $row) {
@@ -67,47 +67,8 @@ $app->post(
                         "quantity" => $row['quantity'],
                         "price" => $row['price'], //don't use client-side quoted price, calculate price using given options
                         "sub_total" => floatval($row['price']) * intval($row['quantity']),
+                        'options' => getProductOptions($row['productid'], $row['options'])
                     ];
-                    
-                    $comment = '';
-                    $options = $row['options'];
-                    $productsTable = TableGatewayFactory::create('products');
-                    $product = $productsTable->getItems(
-                        [
-                            'id' => $row['productid'],
-                            'depth' => 2,
-                            'single' => 1,
-                        ]
-                    )['data'];
-
-                    if ($product) {
-                        foreach ($options as $obj) {
-                            $option = _::find(
-                                ArrayUtils::get($product, 'options.data'), 
-                                function ($o) use ($obj) { 
-                                    return ArrayUtils::get($o, 'option_id.data.slug') == ArrayUtils::get($obj, 'name');
-                                }
-                            );
-                            if ($option) {
-                                $optionValue =  _::find(
-                                    ArrayUtils::get($option, 'option_values.data'),
-                                    function ($o) use ($obj) {
-                                        return ArrayUtils::get($o, 'id') == ArrayUtils::get($obj, 'value');
-                                    }
-                                );
-                                if ($optionValue) {
-                                    $comment .= ArrayUtils::get($obj, 'name').": "
-                                .ArrayUtils::get($optionValue, 'option_value.data.value')
-                                .PHP_EOL;
-                                } else {
-                                    $comment .= ArrayUtils::get($obj, 'name').": "
-                                .ArrayUtils::get($obj, 'value')
-                                .PHP_EOL;
-                                }
-                            }
-                        }
-                    }
-                    $record['options'] = $comment;
                     error_log("Order detail: ".json_encode($record));
                     $entriesService->createEntry($table, $record, $params);
                 }
@@ -191,41 +152,8 @@ $app->post(
                     "quantity" => $row['quantity'],
                     "price" => $row['price'], //don't use client-side quoted price, calculate price using given options
                     "sub_total" => floatval($row['price']) * intval($row['quantity']),
+                    'options' => getProductOptions($row['productid'], $row['options'])
                 ];
-                
-                $comment = '';
-                $options = $row['options'];
-                $productsTable = TableGatewayFactory::create('products');
-                $product = $productsTable->getItems(
-                    [
-                        'id' => $row['productid'],
-                        'depth' => 2,
-                        'single' => 1,
-                    ]
-                )['data'];
-
-                if ($product) {
-                    foreach ($options as $obj) {
-                        $option = _::find(
-                            ArrayUtils::get($product, 'options.data'), 
-                            function ($o) use ($obj) { 
-                                return ArrayUtils::get($o, 'option_id.data.name') == ArrayUtils::get($obj, 'name')
-                                && ArrayUtils::get($o, 'id') == ArrayUtils::get($obj, 'value');
-                            }
-                        );
-
-                        if ($option) {
-                            $comment .= ArrayUtils::get($obj, 'name').": "
-                            .ArrayUtils::get($option, 'option_value_id.data.value')
-                            .PHP_EOL;
-                        } else {
-                            $comment .= ArrayUtils::get($obj, 'name').": "
-                            .ArrayUtils::get($obj, 'value')
-                            .PHP_EOL;
-                        }
-                    }
-                }
-                $record['options'] = $comment;
                 error_log("Order detail: ".json_encode($record));
                 $entriesService->createEntry($table, $record, $params);
             }
@@ -311,7 +239,6 @@ $app->put(
                 ]
             );
         }
-
         
         if (ArrayUtils::get($payload, 'confirm') && ArrayUtils::get($payload, 'payment') == "Transfer") {
             $order['status'] = 'pending';
@@ -452,7 +379,6 @@ $app->post(
 $app->get(
     '/checkout_options', 
     function () use ($app) {
-
         return $app->response(
             [
                 "shipping_method" => getShippingMethods(),

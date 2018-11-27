@@ -196,3 +196,45 @@ function getShippingCities()
         []
     );
 }
+
+function getProductOptions($id, $options)
+{
+    $comment = '';
+    $productsTable = TableGatewayFactory::create('products');
+    $product = $productsTable->getItems(
+        [
+            'id' => $id,
+            'depth' => 3,
+            'single' => 1,
+        ]
+    )['data'];
+    if ($product) {
+        foreach ($options as $obj) {
+            $option = _::find(
+                ArrayUtils::get($product, 'options.data'), 
+                function ($o) use ($obj) { 
+                    return ArrayUtils::get($o, 'option_id.data.slug') == ArrayUtils::get($obj, 'name');
+                }
+            );
+            if ($option) {
+                error_log('options '.json_encode($option));
+                $optionValue =  _::find(
+                    ArrayUtils::get($option, 'option_values.data'),
+                    function ($o) use ($obj) {
+                        return ArrayUtils::get($o, 'id') == ArrayUtils::get($obj, 'value');
+                    }
+                );
+                if ($optionValue) {
+                    $comment .= ArrayUtils::get($option, 'option_id.data.name').": "
+                        .ArrayUtils::get($optionValue, 'option_value.data.value')
+                        .PHP_EOL;
+                } elseif (!empty(ArrayUtils::get($obj, 'value'))) {
+                    $comment .= ArrayUtils::get($option, 'option_id.data.name').": "
+                        .ArrayUtils::get($obj, 'value')
+                        .PHP_EOL;
+                }
+            }
+        }
+    }
+    return $comment;
+}

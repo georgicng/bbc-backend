@@ -1,37 +1,36 @@
 <?php
-use Directus\Application\Application;
 use Directus\Database\TableGatewayFactory;
 use Directus\Util\ArrayUtils;
-$app = Application::getInstance();
 
 return [
     'postInsert' => function ($TableGateway, $record, $db) {
-        // ...
-        
         $tableName = $TableGateway->getTable();
         if ($tableName == 'enquiries') {
+            //send enquiry email
             $to      = $record['email'];
             $subject = $record['subject'];
             $message = $record['message'];
             $headers = array(
-                'From' => 'webmaster@example.com',
-                'Reply-To' => 'webmaster@example.com',
+                'From' => 'hello@butterbakescakes.com',
+                'Reply-To' => 'hello@butterbakescakes.com',
                 'X-Mailer' => 'PHP/' . phpversion()
             );
 
             mail($to, $subject, $message, $headers);
         } elseif ($tableName == 'issues') {
+            //send issue email
             $to      = $record['email'];
             $subject = $record['subject'];
             $message = $record['description'];
             $headers = array(
-                'From' => 'webmaster@example.com',
-                'Reply-To' => 'webmaster@example.com',
+                'From' => 'hello@butterbakescakes.com',
+                'Reply-To' => 'hello@butterbakescakes.com',
                 'X-Mailer' => 'PHP/' . phpversion()
             );
 
             mail($to, $subject, $message, $headers);
         } elseif ($tableName == 'products') {
+            //add general product options to new products
             $id = ArrayUtils::get($record, 'id');
             $generalOptionsTable = TableGatewayFactory::create('general_product_options');
             $options = $generalOptionsTable->getItems(
