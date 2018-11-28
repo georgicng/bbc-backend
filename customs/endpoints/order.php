@@ -25,7 +25,7 @@ $app->post(
 
         $orderID = ArrayUtils::get($payload, 'id');
 
-        if (isset($orderID)) {
+        if (isset($orderID) && $orderID != 0) {
             //update order
             $table = 'orders';
             $tableGateway = new TableGateway($table, $ZendDb, $acl); 
@@ -69,7 +69,6 @@ $app->post(
                         "sub_total" => floatval($row['price']) * intval($row['quantity']),
                         'options' => getProductOptions($row['productid'], $row['options'])
                     ];
-                    error_log("Order detail: ".json_encode($record));
                     $entriesService->createEntry($table, $record, $params);
                 }
             }
@@ -138,9 +137,7 @@ $app->post(
             $newRecord = $entriesService->createEntry($table, array_merge($order, $address), $params);
             $primaryKey = $tableGateway->primaryKeyFieldName;
             $orderID = ArrayUtils::get($newRecord->toArray(), $primaryKey);
-            error_log("order Id: ".json_encode($orderID));
-            
-        
+
             //save order items
             $items = $payload['cart'];
             $table = 'order_details';
@@ -154,7 +151,6 @@ $app->post(
                     "sub_total" => floatval($row['price']) * intval($row['quantity']),
                     'options' => getProductOptions($row['productid'], $row['options'])
                 ];
-                error_log("Order detail: ".json_encode($record));
                 $entriesService->createEntry($table, $record, $params);
             }
         
@@ -241,8 +237,9 @@ $app->put(
         }
         
         if (ArrayUtils::get($payload, 'confirm') && ArrayUtils::get($payload, 'payment') == "Transfer") {
-            $order['status'] = 'pending';
-            $tableGateway->updateRecord($order, 1);
+            $record = ['status' => 'pending', 'id' => $id];
+            $row = $tableGateway->updateRecord($record, 1);
+            ArrayUtils::set($order, 'status', 'pending');
             return $app->response(
                 [
                     'status' => 'success',
@@ -251,17 +248,17 @@ $app->put(
             );
         } 
         
-        if ($reference = ArrayUtils::get($payload, 'reference') && ArrayUtils::get($payload, 'payment') == "Paystack" ) {
+        if (ArrayUtils::has($payload, 'reference') && ArrayUtils::get($payload, 'payment') == "Paystack" ) {
             //confirm payment
-            $table = 'payment_method_meta';
+            $table = 'payment_methods';
             $tableGateway = new TableGateway($table, $ZendDb, $acl);
             $payment_method =  $tableGateway->getItems(
                 [
                     'id' => 2,
-                    'depth' => 2
+                    'depth' => 3
                 ]
             )['data'];
-            if (!$payment_method) {
+            if (empty($payment_method)) {
                 return $app->response(
                     [
                         'status' => 'error',
@@ -273,13 +270,13 @@ $app->put(
             $meta = _::find(
                 ArrayUtils::get($payment_method, 'settings.data'), 
                 function ($o) use ($mode) { 
-                    if ($mode = 'live') {
+                    if ($mode == 'live') {
                         return ArrayUtils::get($o, 'key') == 'live_private_key';
                     }
                     return ArrayUtils::get($o, 'key') == 'test_private_key';  
                 }
             );
-            if (!$meta || !ArrayUtils::get($payment_meta, 'value')) {
+            if (empty($meta) || !ArrayUtils::get($meta, 'value')) {
                 return $app->response(
                     [
                         'status' => 'error',
@@ -287,15 +284,15 @@ $app->put(
                     ]
                 );
             }
-
             $opts = array(
                 'http' => array(
-                'header' => "Authorization: Bearer ".ArrayUtils::get($payment_meta, 'value')
+                'header' => "Authorization: Bearer ".ArrayUtils::get($meta, 'value')
                 )
             );
             $context = stream_context_create($opts);
             try {
-                $response = file_get_contents("https://api.paystack.co/transaction/verify/".$reference, false, $context);
+                $url = "https://api.paystack.co/transaction/verify/".ArrayUtils::get($payload, 'reference');
+                $response = file_get_contents($url, false, $context);
                 if ($response === false) {
                     return $app->response(
                         [
@@ -305,13 +302,15 @@ $app->put(
                     );
                 }
                 $response = json_decode($response, true);
-                error_log('paystack response: '.json_encode($response));
                 if (ArrayUtils::get($response, 'data.status') == 'success') {
-                    if (ArrayUtils::get($order, 'total') == floatval(ArrayUtils::get($response, 'data.amount'))
+                    if (ArrayUtils::get($order, 'total') * 100 == floatval(ArrayUtils::get($response, 'data.amount'))
                         && ArrayUtils::get($order, 'reference') == ArrayUtils::get($response, 'data.reference')
                     ) {
-                        $order['status'] = 'processing';
-                        $tableGateway->updateRecord($order, 1);
+                        $table = 'orders';
+                        $tableGateway = new TableGateway($table, $ZendDb, $acl);
+                        $record = ['status' => 'processing', 'id' => $id];
+                        $row = $tableGateway->updateRecord($record, 1);
+                        ArrayUtils::set($order, 'status', 'processing');
                         return $app->response(
                             [
                                 'status' => 'success',
@@ -359,17 +358,140 @@ $app->put(
 $app->post(
     '/orders/:id',
     function ($id) use ($app) {
-        //Update order status
-        /* if (!is_numeric_array($payload)) {
-            $params[$primaryKey] = ArrayUtils::get($payload, $primaryKey);
-            $payload = [$payload];
+        $entriesService = new EntriesService($app);
+        $ZendDb = $app->container->get('zenddb');
+        $acl = $app->container->get('acl');
+        $payload = $app->request()->post();
+        $params = $app->request()->get();
+        $table = 'orders';
+        $tableGateway = new TableGateway($table, $ZendDb, $acl);
+        $order =  $tableGateway->getItems(
+            [
+                'id' => $id,
+                'single' => 1
+            ]
+        )['data'];
+        if (!$order) {
+            return $app->response(
+                [
+                    'status' => 'error',
+                    'message' => 'Order not found',
+                ]
+            );
+        }
+        
+        if (ArrayUtils::get($payload, 'confirm') && ArrayUtils::get($payload, 'payment') == "Transfer") {
+            $record = ['status' => 'pending', 'id' => $id];
+            $row = $tableGateway->updateRecord($record, 1);
+            ArrayUtils::set($order, 'status', 'pending');
+            return $app->response(
+                [
+                    'status' => 'success',
+                    'data' => $order
+                ]
+            );
+        } 
+        
+        if ($reference = ArrayUtils::get($payload, 'reference') && ArrayUtils::get($payload, 'payment') == "Paystack" ) {
+            //confirm payment
+            $table = 'payment_methods';
+            $tableGateway = new TableGateway($table, $ZendDb, $acl);
+            $payment_method =  $tableGateway->getItems(
+                [
+                    'id' => 2,
+                    'depth' => 3
+                ]
+            )['data'];
+            if (empty($payment_method)) {
+                return $app->response(
+                    [
+                        'status' => 'error',
+                        'message' => 'Payment method not found'
+                    ]
+                );
+            }
+            $mode = ArrayUtils::get($payment_method, 'mode');
+            $meta = _::find(
+                ArrayUtils::get($payment_method, 'settings.data'), 
+                function ($o) use ($mode) { 
+                    if ($mode = 'live') {
+                        return ArrayUtils::get($o, 'key') == 'live_private_key';
+                    }
+                    return ArrayUtils::get($o, 'key') == 'test_private_key';  
+                }
+            );
+            if (!$meta || !ArrayUtils::get($payment_meta, 'value')) {
+                return $app->response(
+                    [
+                        'status' => 'error',
+                        'message' => "Can't confirm your payment"
+                    ]
+                );
+            }
+
+            $opts = array(
+                'http' => array(
+                'header' => "Authorization: Bearer ".ArrayUtils::get($payment_meta, 'value')
+                )
+            );
+            $context = stream_context_create($opts);
+            try {
+                $response = file_get_contents("https://api.paystack.co/transaction/verify/".$reference, false, $context);
+                if ($response === false) {
+                    return $app->response(
+                        [
+                            'status' => 'error',
+                            'message' => "Can't reach the payment provider to verify payment"
+                        ]
+                    );
+                }
+                $response = json_decode($response, true);
+                if (ArrayUtils::get($response, 'data.status') == 'success') {
+                    if (ArrayUtils::get($order, 'total') == floatval(ArrayUtils::get($response, 'data.amount'))
+                        && ArrayUtils::get($order, 'reference') == ArrayUtils::get($response, 'data.reference')
+                    ) {
+                        $record = ['status' => 'processing', 'id' => $id];
+                        $row = $tableGateway->updateRecord($record, 1);
+                        ArrayUtils::set($order, 'status', 'processing');
+                        return $app->response(
+                            [
+                                'status' => 'success',
+                                'data' => $order
+                            ]
+                        );
+                    } else {
+                        //set error
+                        return $app->response(
+                            [
+                                'status' => 'error',
+                                'message' => 'Invalid Payment: incorrect amount paid'
+                            ]
+                        );
+                    }
+                } else {
+                    return $app->response(
+                        [
+                            'status' => 'error',
+                            'message' => 'Payment provider returns error'
+                        ]
+                    );
+                }
+            } catch (Exception $e) {
+                return $app->response(
+                    [
+                        'status' => 'error',
+                        'message' => 'Something went wrong'
+                    ]
+                );
+            }
         }
 
-        $tableGateway->updateCollection($payload); */
+        //if not error send email to client and admin
+
         return $app->response(
             [
-                'status' => true,
-                'message' => 'it works'
+                'status' => 'error',
+                'message' => 'Unable to process request'
             ]
         );
     }

@@ -162,7 +162,12 @@ function getDiscount($code, $subtotal)
 function getPaymentMethods()
 {
     $paymentTable = TableGatewayFactory::create('payment_methods');
-    return $paymentTable->getItems()['data'];
+    $methods = $paymentTable->getItems(
+        [
+            "columns" => "id,name,description,mode"
+        ]
+    )['data'];
+    return $methods;
 }
 
 function getShippingMethods()
@@ -217,7 +222,6 @@ function getProductOptions($id, $options)
                 }
             );
             if ($option) {
-                error_log('options '.json_encode($option));
                 $optionValue =  _::find(
                     ArrayUtils::get($option, 'option_values.data'),
                     function ($o) use ($obj) {
