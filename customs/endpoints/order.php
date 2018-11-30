@@ -37,7 +37,6 @@ $app->post(
                 'delivery_date' => ArrayUtils::get($payload, 'delivery_date'),
                 'express_delivery' => ArrayUtils::get($payload, 'express')? "1" : "0",
                 'status' => 'created',
-                'reference' => uniqid(),
                 'total' => getTotal($payload)
             ];
             //get address from request
@@ -47,7 +46,8 @@ $app->post(
                 $address['city'] = ArrayUtils::get($payload, 'address.alt_city');
             }
                    
-            $tableGateway->updateRecord(array_merge($order, $address), 1);
+            $row = $tableGateway->updateRecord(array_merge($order, $address), 1);
+            $order['reference'] = $row->reference;
             $orderID = ArrayUtils::get($payload, 'id');
             
             //delete previous order details
@@ -384,6 +384,7 @@ $app->post(
             $record = ['status' => 'pending', 'id' => $id];
             $row = $tableGateway->updateRecord($record, 1);
             ArrayUtils::set($order, 'status', 'pending');
+            sendConfirmation($id);
             return $app->response(
                 [
                     'status' => 'success',
@@ -392,7 +393,7 @@ $app->post(
             );
         } 
         
-        if ($reference = ArrayUtils::get($payload, 'reference') && ArrayUtils::get($payload, 'payment') == "Paystack" ) {
+        if (ArrayUtils::has($payload, 'reference') && ArrayUtils::get($payload, 'payment') == "Paystack" ) {
             //confirm payment
             $table = 'payment_methods';
             $tableGateway = new TableGateway($table, $ZendDb, $acl);
@@ -414,13 +415,13 @@ $app->post(
             $meta = _::find(
                 ArrayUtils::get($payment_method, 'settings.data'), 
                 function ($o) use ($mode) { 
-                    if ($mode = 'live') {
+                    if ($mode == 'live') {
                         return ArrayUtils::get($o, 'key') == 'live_private_key';
                     }
                     return ArrayUtils::get($o, 'key') == 'test_private_key';  
                 }
             );
-            if (!$meta || !ArrayUtils::get($payment_meta, 'value')) {
+            if (empty($meta) || !ArrayUtils::get($meta, 'value')) {
                 return $app->response(
                     [
                         'status' => 'error',
@@ -428,15 +429,15 @@ $app->post(
                     ]
                 );
             }
-
             $opts = array(
                 'http' => array(
-                'header' => "Authorization: Bearer ".ArrayUtils::get($payment_meta, 'value')
+                'header' => "Authorization: Bearer ".ArrayUtils::get($meta, 'value')
                 )
             );
             $context = stream_context_create($opts);
             try {
-                $response = file_get_contents("https://api.paystack.co/transaction/verify/".$reference, false, $context);
+                $url = "https://api.paystack.co/transaction/verify/".ArrayUtils::get($payload, 'reference');
+                $response = file_get_contents($url, false, $context);                
                 if ($response === false) {
                     return $app->response(
                         [
@@ -446,13 +447,18 @@ $app->post(
                     );
                 }
                 $response = json_decode($response, true);
+                $order_amount = floatval(ArrayUtils::get($order, 'total') * 100);
+                $paid_amount = floatval(ArrayUtils::get($response, 'data.amount'));
+                $order_reference = ArrayUtils::get($order, 'reference');
+                $payment_reference = ArrayUtils::get($response, 'data.reference');
                 if (ArrayUtils::get($response, 'data.status') == 'success') {
-                    if (ArrayUtils::get($order, 'total') == floatval(ArrayUtils::get($response, 'data.amount'))
-                        && ArrayUtils::get($order, 'reference') == ArrayUtils::get($response, 'data.reference')
-                    ) {
+                    if ($order_amount == $paid_amount && $payment_reference == $order_reference) {
+                        $table = 'orders';
+                        $tableGateway = new TableGateway($table, $ZendDb, $acl);
                         $record = ['status' => 'processing', 'id' => $id];
                         $row = $tableGateway->updateRecord($record, 1);
                         ArrayUtils::set($order, 'status', 'processing');
+                        sendConfirmation($id);
                         return $app->response(
                             [
                                 'status' => 'success',
@@ -461,10 +467,16 @@ $app->post(
                         );
                     } else {
                         //set error
+                        if ($order_amount != $paid_amount) {
+                            $message = "Invalid Payment: incorrect amount paid";
+                        } else {
+                            $message = "Your payment can't be reconciled to this order";
+                        }
+
                         return $app->response(
                             [
                                 'status' => 'error',
-                                'message' => 'Invalid Payment: incorrect amount paid'
+                                'message' => $message
                             ]
                         );
                     }
@@ -477,6 +489,8 @@ $app->post(
                     );
                 }
             } catch (Exception $e) {
+                //mail error
+                error_log('paystach exception: '.json_encode($e->getMessage()));
                 return $app->response(
                     [
                         'status' => 'error',

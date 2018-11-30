@@ -1,4 +1,5 @@
 <?php
+use Directus\Mail\Mail;
 use Directus\Util\ArrayUtils;
 use Directus\Database\TableGatewayFactory;
 
@@ -241,4 +242,117 @@ function getProductOptions($id, $options)
         }
     }
     return $comment;
+}
+
+function sendConfirmation($id) 
+{
+    $ordersTable = TableGatewayFactory::create('orders');
+    $record=  $ordersTable->getItems(
+        [
+            'id' => $id,
+            'single' => 1,
+            'depth' => 2
+        ]
+    )['data'];
+    if ($record) {
+
+        $order = [
+            'id' => $id,
+            'total' => ArrayUtils::get($record, 'total')
+        ];
+
+        if (ArrayUtils::get($record, 'status') == "processing") {
+            $message = "<p>Your payment has been received and order been processed</p>";
+        } else {
+            $message = "<p>Your order has been received and will be processed when payment is confirmed.".
+             "Please find our bank details below.".
+             "<p>You can send proof of payment to this email address  for confirmation</p>";
+        }
+
+        $order['items'] = array_map(
+            function ($item) {
+                return [
+                    'name' => ArrayUtils::get($item, 'product_id.data.name'),
+                    'quantity' => ArrayUtils::get($item, 'quantity'),
+                    'amount' => ArrayUtils::get($item, 'sub_total')
+                ];
+            },
+            ArrayUtils::get($record, 'order_items.data')
+        );
+
+        $shipping =  _::find(
+            ArrayUtils::get($record, 'order_totals.data'),
+            function ($o) {
+                return ArrayUtils::get($o, 'item') == 'shipping';
+            }
+        );
+        
+        if ($shipping) {
+            $order['shipping'] = ArrayUtils::get($shipping, 'item');
+        }
+
+        $discount =  _::find(
+            ArrayUtils::get($record, 'order_totals.data'),
+            function ($o) {
+                return ArrayUtils::get($o, 'item') == 'discount';
+            }
+        );
+        
+        if ($discount) {
+            $order['discount'] = ArrayUtils::get($discount, 'item');
+        }
+
+        if (ArrayUtils::get($record, 'express') == "1") {
+            $order['deliveryDate'] = "Within 24 Hours";
+        } else {
+            $order['deliveryDate'] = ArrayUtils::get($record, 'delivery_date').
+            '<br>'.ArrayUtils::get($record, 'delivery_time');
+        }
+
+        if (ArrayUtils::has($record, 'shipping_method.data.shipping_method') 
+            && ArrayUtils::get($record, 'shipping_method.data.shipping_method.data.id') == 3
+        ) {
+            $order['shipping'] = ArrayUtils::get($record, 'address').
+            '<br>'.ArrayUtils::get($record, 'landmark').
+            '<br>'.ArrayUtils::get($record, 'city');
+        } else {
+            $order['shipping'] = ArrayUtils::get($record, 'shipping_method.data.title');
+        }
+
+        if (ArrayUtils::get($record, 'payment_method') == 1) {
+            $order['payment'] = "Transfer";
+        } else {
+            $order['payment'] ="Paystack";
+        }
+    }
+    $data = [
+        'message' => $message,
+        'logo' => 'https://www.butterbakescakes.com/static/images/logo.png',
+        'store' => 'https://www.butterbakescakes.com/#/products',
+        'contactLink' => 'http://www.butterbakescakes.com/#/contact',
+        'orderLink' => 'http://www.butterbakescakes.com/#/orders/'.$id,
+        'order' => $order? $order : []
+    ];
+
+    if (!empty(ArrayUtils::get($record, 'email'))) {
+        $subject = "ButterBakes Cakes: Order Received";
+        Mail::send(
+            'mail/order-confirmation.twig',
+            $data,
+            function (Swift_Message $message) use ($record, $subject) {
+                $message->setSubject($subject);
+                $message->setTo(ArrayUtils::get($record, 'email'));
+            }
+        );
+    }
+    
+    $subject = "New Order";
+    Mail::send(
+        'mail/order-confirmation.twig',
+        $data,
+        function (Swift_Message $message) use ($record, $subject) {
+            $message->setSubject($subject);
+            $message->setTo(ArrayUtils::get($record, 'email'));
+        }
+    );
 }
