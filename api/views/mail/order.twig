@@ -114,7 +114,7 @@ END OF IMPORTANT
             h3,
             h4,
             h5 {
-                Margin: 0;
+                margin: 0;
                 line-height: 120%;
                 mso-line-height-rule: exactly;
                 font-family: 'open sans', 'helvetica neue', helvetica, arial, sans-serif;
@@ -760,7 +760,7 @@ END OF IMPORTANT
                                                                                     <tr>
                                                                                         <td class="esd-block-image es-p15b" align="center">
                                                                                             <a target="_blank">
-                                                                                                <img src="{{logo}}" alt="BBC logo" style="display: block;" title="BBC logo" width="37">
+                                                                                                <img src="{{logo}}" alt="BBC logo" style="display: block;" title="BBC logo" height="100">
                                                                                             </a>
                                                                                         </td>
                                                                                     </tr>
@@ -774,13 +774,15 @@ END OF IMPORTANT
                                                                                             </p>
                                                                                         </td>
                                                                                     </tr>
-                                                                                    <tr>
-                                                                                        <td class="esd-block-text es-m-txt-c es-p5b" esdev-links-color="#777777" align="left">
-                                                                                            <p style="color: #777777;">If you didn't purchase any item on our store using this email address, please ignore this email or&nbsp;<u>
-                                                                                                    <a target="_blank" style="color: #777777;" href="{{contactLink}}">Contact Us</a>
-                                                                                                </u>.<br></p>
-                                                                                        </td>
-                                                                                    </tr>
+                                                                                    {% if type == 'customer' %}
+                                                                                        <tr>
+                                                                                            <td class="esd-block-text es-m-txt-c es-p5b" esdev-links-color="#777777" align="left">
+                                                                                                <p style="color: #777777;">If you didn't purchase any item on our store using this email address, please ignore this email or&nbsp;<u>
+                                                                                                        <a target="_blank" style="color: #777777;" href="{{contactLink}}">Contact Us</a>
+                                                                                                    </u>.<br></p>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    {% endif %}
                                                                                 </tbody>
                                                                             </table>
                                                                         </td>

@@ -23,13 +23,38 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="esd-block-text es-p10b" align="center">
-                                                                <h2>Thank You For Your Order!</h2>
+                                                                {% if type == 'customer' %}
+                                                                    <h2>Thank You For Your Order!</h2>
+                                                                {% else %}
+                                                                    {% if oreder.payment == 'Paystack' %}
+                                                                        <h2>New Order (Paid)!</h2>
+                                                                    {% else %}
+                                                                        <h2>New Order (Pending)!</h2>
+                                                                    {% endif %}
+                                                                {% endif %}
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="esd-block-text es-p15t es-p20b" align="left">
-                                                                <p style="font-size: 16px; color: #777777;">{{message}}</p>
-                                                            </td>
+                                                            {% if type == 'customer' %}
+                                                                <td class="esd-block-text es-p15t es-p20b" align="left">
+                                                                    <p style="font-size: 16px; color: #777777;">{{message | raw}}</p>
+                                                                </td>
+                                                            {% else %}
+                                                                <table  cellspacing="1" cellpadding="1" border="0" align="left">
+                                                                    <tbody>
+                                                                        <tr class="cke_show_border">
+                                                                            <td>
+                                                                                <h4>By</h4>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <h4>{{order.user | raw}}</h4>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            {% endif %}
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -108,7 +133,7 @@
                                                                        
                                                                         <tr>
                                                                             <td style="padding: 5px 10px 5px 0" width="80%" align="left">
-                                                                                <p>Shipping + Handling</p>
+                                                                                <p>Delivery Cost</p>
                                                                             </td>
                                                                             <td style="padding: 5px 0" width="20%" align="left">
                                                                                 <p>N{{order.shipping}}</p>
@@ -185,7 +210,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="esd-block-text es-p10b" align="left">
-                                                                {{order.deliveryAddress}}
+                                                                {{order.deliveryAddress  | raw }}
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -208,7 +233,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="esd-block-text" align="left">
-                                                                <p>{{order.deliveryDate}}</p>
+                                                                <p>{{order.deliveryDate | raw}}</p>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -226,7 +251,7 @@
         </tr>
     </tbody>
 </table>
-{% if order.payment == 'Transfer' %}
+{% if order.payment == 'Transfer' and type == 'customer' %}
     <table class="es-content" cellspacing="0" cellpadding="0" align="center">
         <tbody>
             <tr>

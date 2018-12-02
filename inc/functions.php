@@ -262,12 +262,16 @@ function sendConfirmation($id)
         ];
 
         if (ArrayUtils::get($record, 'status') == "processing") {
-            $message = "<p>Your payment has been received and order been processed</p>";
+            $message = '<p class="es-p10">Your payment has been received and order been processed</p>';
         } else {
-            $message = "<p>Your order has been received and will be processed when payment is confirmed.".
-             "Please find our bank details below.".
-             "<p>You can send proof of payment to this email address  for confirmation</p>";
+            $message = '<p class="es-p10">Your order has been received and will be processed when payment is confirmed.'.
+             '<p class="es-p10">Please find our bank details below.</p>'.
+             '<p class="es-p10">You can send proof of payment to this email address  for confirmation</p>';
         }
+
+        $order['user'] = "{$record['first_name']} {$record['last_name']}".
+        "<br>{$record['email']}".
+        "<br>{$record['phone']}";
 
         $order['items'] = array_map(
             function ($item) {
@@ -288,18 +292,18 @@ function sendConfirmation($id)
         );
         
         if ($shipping) {
-            $order['shipping'] = ArrayUtils::get($shipping, 'item');
+            $order['shipping'] = ArrayUtils::get($shipping, 'total');
         }
 
         $discount =  _::find(
             ArrayUtils::get($record, 'order_totals.data'),
             function ($o) {
-                return ArrayUtils::get($o, 'item') == 'discount';
+                return ArrayUtils::get($o, 'item') == 'item';
             }
         );
         
         if ($discount) {
-            $order['discount'] = ArrayUtils::get($discount, 'item');
+            $order['discount'] = ArrayUtils::get($discount, 'total');
         }
 
         if (ArrayUtils::get($record, 'express') == "1") {
@@ -312,18 +316,19 @@ function sendConfirmation($id)
         if (ArrayUtils::has($record, 'shipping_method.data.shipping_method') 
             && ArrayUtils::get($record, 'shipping_method.data.shipping_method.data.id') == 3
         ) {
-            $order['shipping'] = ArrayUtils::get($record, 'address').
-            '<br>'.ArrayUtils::get($record, 'landmark').
+            $order['deliveryAddress'] = ArrayUtils::get($record, 'address').
+            '<br>Off: '.ArrayUtils::get($record, 'landmark').
             '<br>'.ArrayUtils::get($record, 'city');
         } else {
-            $order['shipping'] = ArrayUtils::get($record, 'shipping_method.data.title');
+            $order['deliveryAddress'] = ArrayUtils::get($record, 'shipping_method.data.title');
         }
 
-        if (ArrayUtils::get($record, 'payment_method') == 1) {
+        if (ArrayUtils::get($record, 'payment_method.data.id') == 1) {
             $order['payment'] = "Transfer";
         } else {
             $order['payment'] ="Paystack";
         }
+        
     }
     $data = [
         'message' => $message,
@@ -331,7 +336,8 @@ function sendConfirmation($id)
         'store' => 'https://www.butterbakescakes.com/#/products',
         'contactLink' => 'http://www.butterbakescakes.com/#/contact',
         'orderLink' => 'http://www.butterbakescakes.com/#/orders/'.$id,
-        'order' => $order? $order : []
+        'order' => $order? $order : [],
+        'type' => 'customer'
     ];
 
     if (!empty(ArrayUtils::get($record, 'email'))) {
@@ -347,6 +353,7 @@ function sendConfirmation($id)
     }
     
     $subject = "New Order";
+    $data['type'] = 'admin';
     Mail::send(
         'mail/order-confirmation.twig',
         $data,
