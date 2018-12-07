@@ -5475,7 +5475,7 @@ body.help .discover-spotlight {
     .fields .field .interface select {
       padding-right: 36px;
       width: 100%;
-      max-width: 200px; }
+      max-width: 400px; }
     .fields .field .interface input[type="checkbox"].custom-checkbox + label {
       display: inline-block; }
     .fields .field .interface input[type="checkbox"],

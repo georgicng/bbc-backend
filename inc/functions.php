@@ -244,29 +244,84 @@ function getProductOptions($id, $options)
     return $comment;
 }
 
+function getProductImage($id)
+{
+    error_log("product id: ".$id);
+    $productsTable = TableGatewayFactory::create('products');
+    $product = $productsTable->getItems(
+        [
+            'id' => $id,
+            'depth' => 0,
+            'single' => 1,
+        ]
+    )['data'];
+
+    if (!empty($product)) {
+        error_log("image id: ".ArrayUtils::get($product, 'image'));
+        return ArrayUtils::get($product, 'image');
+    }
+
+    return 0;
+}
+
+function getOption($key)
+{
+    
+    $settingsTable = TableGatewayFactory::create('settings');
+    $record =  $settingsTable->getItems([])['data'];
+    error_log("settings: ". json_encode($record));
+    if (!empty($record)) {
+        $setting =  _::find(
+            $record,
+            function ($o) use ($key) {
+                return ArrayUtils::get($o, 'key') == $key;
+            }
+        );
+        if (!empty($setting)) {
+            error_log('value: '.ArrayUtils::get($setting, 'value'));
+            return ArrayUtils::get($setting, 'value');
+        }
+    }
+    
+    return '';    
+}
+
 function sendConfirmation($id) 
 {
     $ordersTable = TableGatewayFactory::create('orders');
-    $record=  $ordersTable->getItems(
+    $record =  $ordersTable->getItems(
         [
             'id' => $id,
             'single' => 1,
-            'depth' => 2
+            'depth' => 3
         ]
     )['data'];
+    $admin_url = getOption('admin_url');
+    $admin_url = !empty($admin_url) ? $admin_url : 'http://www.butterbakescakes.com/backend';
+    $site_url = getOption('site_url');
+    $site_url = !empty($site_url) ? $site_url : 'http://www.butterbakescakes.com';
+    $logo = getOption('logo');
+    $logo = !empty($logo) ? $logo : $site_url.'/static/images/logo.png';
+    $admin_email = getOption('email');
+    $admin_email = !empty($admin_email) ? $admin_email : 'butterbakescakes@gmail.com';
+    
+    error_log("settings: ". json_encode([$admin_url, $admin_email, $site_url, $logo]));
     if ($record) {
-
         $order = [
             'id' => $id,
-            'total' => ArrayUtils::get($record, 'total')
+            'total' => ArrayUtils::get($record, 'total'),
+            'reference' => ArrayUtils::get($record, 'reference')
         ];
 
-        if (ArrayUtils::get($record, 'status') == "processing") {
-            $message = '<p class="es-p10">Your payment has been received and order been processed</p>';
+        if (ArrayUtils::get($record, 'status') == "3") {
+            $message = '<p style="color: #fff;">Hi '.$record['first_name'].', we have received order № '.$id.
+            ' and are working on it now.<br></p>'.
+            '<p style="color: #fff;">We\'ll email you an update when we have shipped it.<br></p>';
         } else {
-            $message = '<p class="es-p10">Your order has been received and will be processed when payment is confirmed.'.
-             '<p class="es-p10">Please find our bank details below.</p>'.
-             '<p class="es-p10">You can send proof of payment to this email address  for confirmation</p>';
+            $message = '<p style="color: #fff;">Hi '.$record['first_name'].', we have received order № '.$id.
+            ' and will start processing when payment is confirmed.'.
+             '<p style="color: #fff;">Please find our bank details in the Payment and Shipping Info section below.<br></p>'.
+             '<p style="color: #fff;">Please send proof of payment to this email address for confirmation after payment</p>';
         }
 
         $order['user'] = "{$record['first_name']} {$record['last_name']}".
@@ -274,11 +329,19 @@ function sendConfirmation($id)
         "<br>{$record['phone']}";
 
         $order['items'] = array_map(
-            function ($item) {
+            function ($item) use ($admin_url) {
+                if (ArrayUtils::get($item, 'image.data.name')) {
+                    $image = $admin_url.'/thumbnail/150/150/'.ArrayUtils::get($item, 'image.data.name');
+                } else {
+                    $image = $admin_url.'/thumbnail';
+                }
+
                 return [
                     'name' => ArrayUtils::get($item, 'product_id.data.name'),
                     'quantity' => ArrayUtils::get($item, 'quantity'),
-                    'amount' => ArrayUtils::get($item, 'sub_total')
+                    'amount' => ArrayUtils::get($item, 'sub_total'),
+                    'options' => nl2br(ArrayUtils::get($item, 'options')),
+                    'image' => $image
                 ];
             },
             ArrayUtils::get($record, 'order_items.data')
@@ -295,6 +358,17 @@ function sendConfirmation($id)
             $order['shipping'] = ArrayUtils::get($shipping, 'total');
         }
 
+        $sub_total =  _::find(
+            ArrayUtils::get($record, 'order_totals.data'),
+            function ($o) {
+                return ArrayUtils::get($o, 'item') == 'sub_total';
+            }
+        );
+        
+        if ($sub_total) {
+            $order['subtotal'] = ArrayUtils::get($sub_total, 'total');
+        }
+
         $discount =  _::find(
             ArrayUtils::get($record, 'order_totals.data'),
             function ($o) {
@@ -309,36 +383,44 @@ function sendConfirmation($id)
         if (ArrayUtils::get($record, 'express') == "1") {
             $order['deliveryDate'] = "Within 24 Hours";
         } else {
-            $order['deliveryDate'] = ArrayUtils::get($record, 'delivery_date').
-            '<br>'.ArrayUtils::get($record, 'delivery_time');
+            $order['deliveryDate'] = 'Date: '.ArrayUtils::get($record, 'delivery_date').
+            '<br>Time: '.ArrayUtils::get($record, 'delivery_time');
         }
 
         if (ArrayUtils::has($record, 'shipping_method.data.shipping_method') 
             && ArrayUtils::get($record, 'shipping_method.data.shipping_method.data.id') == 3
         ) {
             $order['deliveryAddress'] = ArrayUtils::get($record, 'address').
-            '<br>Off: '.ArrayUtils::get($record, 'landmark').
-            '<br>'.ArrayUtils::get($record, 'city');
+            '<br>Landmark: '.ArrayUtils::get($record, 'landmark').
+            '<br>City: '.ArrayUtils::get($record, 'city');
         } else {
             $order['deliveryAddress'] = ArrayUtils::get($record, 'shipping_method.data.title');
         }
 
         if (ArrayUtils::get($record, 'payment_method.data.id') == 1) {
             $order['payment'] = "Transfer";
+            $order['status'] ="Un-confirmed";
         } else {
             $order['payment'] ="Paystack";
+            $order['status'] ="Confirmed";
         }
         
     }
+    error_log('email: '.json_encode([$order, $admin_email, $message, $logo]));
     $data = [
         'message' => $message,
-        'logo' => 'https://www.butterbakescakes.com/static/images/logo.png',
-        'store' => 'https://www.butterbakescakes.com/#/products',
-        'contactLink' => 'http://www.butterbakescakes.com/#/contact',
-        'orderLink' => 'http://www.butterbakescakes.com/#/orders/'.$id,
+        'logo' => $logo,
+        'store' => $site_url.'/#/products',
+        'categories' => $site_url.'/#/categories',
+        'contactLink' => $site_url.'/#/contact',
+        'complaintLink' => $site_url.'/#/complaint',
+        'tosLink' => $site_url.'/#/terms',
+        'orderLink' => $site_url.'/#/orders/'.$id,
+        'backorderLink' => $admin_url.'/tables/orders/'.$id,
         'order' => $order? $order : [],
         'type' => 'customer'
     ];
+    error_log('template_data: '.json_encode($data));
 
     if (!empty(ArrayUtils::get($record, 'email'))) {
         $subject = "ButterBakes Cakes: Order Received";
@@ -357,9 +439,9 @@ function sendConfirmation($id)
     Mail::send(
         'mail/order-confirmation.twig',
         $data,
-        function (Swift_Message $message) use ($record, $subject) {
+        function (Swift_Message $message) use ($record, $subject, $admin_email) {
             $message->setSubject($subject);
-            $message->setTo(ArrayUtils::get($record, 'email'));
+            $message->setTo($admin_email);
         }
     );
 }

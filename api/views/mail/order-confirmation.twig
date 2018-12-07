@@ -1,298 +1,435 @@
 {% extends "mail/order.twig" %}
 {% block content %}
-
-
-<table class="es-content" cellspacing="0" cellpadding="0" align="center">
-    <tbody>
-        <tr>
-            <td class="esd-stripe" align="center">
-                <table class="es-content-body" width="600" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center">
-                    <tbody>
-                        <tr>
-                            <td class="esd-structure es-p40t es-p35r es-p35l" align="left">
-                                <table width="100%" cellspacing="0" cellpadding="0">
-                                    <tbody>
-                                        <tr>
-                                            <td class="esd-container-frame" width="530" valign="top" align="center">
-                                                <table width="100%" cellspacing="0" cellpadding="0">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="esd-block-image es-p25t es-p25b es-p35r es-p35l" align="center">
-                                                                <a target="_blank" href="{{orderLink}}"> <img src="https://tlr.stripocdn.email/content/guids/CABINET_75694a6fc3c4633b3ee8e3c750851c02/images/67611522142640957.png" alt="" style="display: block;" width="120"> </a>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p10b" align="center">
-                                                                {% if type == 'customer' %}
-                                                                    <h2>Thank You For Your Order!</h2>
-                                                                {% else %}
-                                                                    {% if oreder.payment == 'Paystack' %}
-                                                                        <h2>New Order (Paid)!</h2>
-                                                                    {% else %}
-                                                                        <h2>New Order (Pending)!</h2>
-                                                                    {% endif %}
-                                                                {% endif %}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            {% if type == 'customer' %}
-                                                                <td class="esd-block-text es-p15t es-p20b" align="left">
-                                                                    <p style="font-size: 16px; color: #777777;">{{message | raw}}</p>
-                                                                </td>
-                                                            {% else %}
-                                                                <table  cellspacing="1" cellpadding="1" border="0" align="left">
-                                                                    <tbody>
-                                                                        <tr class="cke_show_border">
-                                                                            <td>
-                                                                                <h4>By</h4>
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>
-                                                                                <h4>{{order.user | raw}}</h4>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </tbody>
-                                                                </table>
-                                                            {% endif %}
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-</table>
-<table class="es-content" cellspacing="0" cellpadding="0" align="center">
-    <tbody>
-        <tr>
-            <td class="esd-stripe" align="center">
-                <table class="es-content-body" width="600" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center">
-                    <tbody>
-                        <tr>
-                            <td class="esd-structure es-p20t es-p35r es-p35l" align="left">
-                                <table width="100%" cellspacing="0" cellpadding="0">
-                                    <tbody>
-                                        <tr>
-                                            <td class="esd-container-frame" width="530" valign="top" align="center">
-                                                <table width="100%" cellspacing="0" cellpadding="0">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p10t es-p10b es-p10r es-p10l" bgcolor="#eeeeee" align="left">
-                                                                <table style="width: 500px;" class="cke_show_border" cellspacing="1" cellpadding="1" border="0" align="left">
-                                                                    <tbody>
-                                                                        <tr>
-                                                                            <td width="80%">
-                                                                                <h4>Order Confirmation #</h4>
-                                                                            </td>
-                                                                            <td width="20%">
-                                                                                <h4>{{order.id}}</h4>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </tbody>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="esd-structure es-p35r es-p35l" align="left">
-                                <table width="100%" cellspacing="0" cellpadding="0">
-                                    <tbody>
-                                        <tr>
-                                            <td class="esd-container-frame" width="530" valign="top" align="center">
-                                                <table width="100%" cellspacing="0" cellpadding="0">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p10t es-p10b es-p10r es-p10l" align="left">
-                                                                <table style="width: 500px;" class="cke_show_border" cellspacing="1" cellpadding="1" border="0" align="left">
-                                                                    <tbody>
-                                                                        {% for item in order.items %}
-                                                                            <tr>
-                                                                                <td style="padding: 5px 10px 5px 0" width="80%" align="left">
-                                                                                    <p>{{item.name}} ({{item.quantity}})</p>
-                                                                                </td>
-                                                                                <td style="padding: 5px 0" width="20%" align="left">
-                                                                                    <p>N{{item.amount}}</p>
-                                                                                </td>
-                                                                            </tr>
-                                                                        {% endfor %}
-                                                                       
-                                                                        <tr>
-                                                                            <td style="padding: 5px 10px 5px 0" width="80%" align="left">
-                                                                                <p>Delivery Cost</p>
-                                                                            </td>
-                                                                            <td style="padding: 5px 0" width="20%" align="left">
-                                                                                <p>N{{order.shipping}}</p>
-                                                                            </td>
-                                                                        </tr>
-                                                                        {% if order.discount %}
-                                                                            <tr>
-                                                                                <td style="padding: 5px 10px 5px 0" width="80%" align="left">
-                                                                                    <p>Discount</p>
-                                                                                </td>
-                                                                                <td style="padding: 5px 0" width="20%" align="left">
-                                                                                    <p>-N{{order.discount}}</p>
-                                                                                </td>
-                                                                            </tr>
-                                                                        {% endif %}
-                                                                        
-                                                                    </tbody>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="esd-structure es-p10t es-p35r es-p35l" align="left">
-                                <table width="100%" cellspacing="0" cellpadding="0">
-                                    <tbody>
-                                        <tr>
-                                            <td class="esd-container-frame" width="530" valign="top" align="center">
-                                                <table style="border-top: 3px solid rgb(238, 238, 238); border-bottom: 3px solid rgb(238, 238, 238);" width="100%" cellspacing="0" cellpadding="0">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p15t es-p15b es-p10r es-p10l" align="left">
-                                                                <table style="width: 500px;" class="cke_show_border" cellspacing="1" cellpadding="1" border="0" align="left">
-                                                                    <tbody>
-                                                                        <tr>
-                                                                            <td width="80%">
-                                                                                <h4>TOTAL</h4>
-                                                                            </td>
-                                                                            <td width="20%">
-                                                                                <h4>N{{order.total}}</h4>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </tbody>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="esd-structure es-p40t es-p40b es-p35r es-p35l" esd-custom-block-id="7796" align="left">
-                                <!--[if mso]><table width="530" cellpadding="0" cellspacing="0"><tr><td width="255" valign="top"><![endif]-->
-                                <table class="es-left" cellspacing="0" cellpadding="0" align="left">
-                                    <tbody>
-                                        <tr>
-                                            <td class="esd-container-frame es-m-p20b" width="255" align="left">
-                                                <table width="100%" cellspacing="0" cellpadding="0">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p15b" align="left">
-                                                                <h4>Delivery/Pickup Address</h4>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p10b" align="left">
-                                                                {{order.deliveryAddress  | raw }}
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <!--[if mso]></td><td width="20"></td><td width="255" valign="top"><![endif]-->
-                                <table class="es-right" cellspacing="0" cellpadding="0" align="right">
-                                    <tbody>
-                                        <tr>
-                                            <td class="esd-container-frame" width="255" align="left">
-                                                <table width="100%" cellspacing="0" cellpadding="0">
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="esd-block-text es-p15b" align="left">
-                                                                <h4>Estimated Delivery Date<br></h4>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="esd-block-text" align="left">
-                                                                <p>{{order.deliveryDate | raw}}</p>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <!--[if mso]></td></tr></table><![endif]-->
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-</table>
-{% if order.payment == 'Transfer' and type == 'customer' %}
-    <table class="es-content" cellspacing="0" cellpadding="0" align="center">
+    <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0">
         <tbody>
             <tr>
-                <td class="esd-stripe" esd-custom-block-id="7797" align="center">
-                    <table class="es-content-body" style="background-color: rgb(27, 155, 163);" width="600" cellspacing="0" cellpadding="0" bgcolor="#1b9ba3" align="center">
+                <td class="esd-email-paddings" valign="top">
+                    <table class="es-content" cellspacing="0" cellpadding="0" align="center">
                         <tbody>
                             <tr>
-                                <td class="esd-structure es-p35t es-p35b es-p35r es-p35l" align="left">
-                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                <td class="esd-stripe" align="center">
+                                    <table class="es-content-body" width="600" cellspacing="0" cellpadding="0" align="center">
                                         <tbody>
                                             <tr>
-                                                <td class="esd-container-frame" width="530" valign="top" align="center">
+                                                <td class="esd-structure es-p20t es-p20b es-p20r es-p20l" esd-general-paddings-checked="false" style="background-color: #EE4899;" bgcolor="#EE4899" align="left">
                                                     <table width="100%" cellspacing="0" cellpadding="0">
                                                         <tbody>
                                                             <tr>
-                                                                <td colspan="2" class="esd-block-text es-p25t" align="center">
-                                                                    <h2 style="color: #ffffff; font-size: 24px;">Account Details.</h2>
+                                                                <td class="esd-container-frame" width="560" valign="top" align="center">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p15t es-p15b" align="center">
+                                                                                    <div class="esd-text">
+                                                                                        <h2 style="color: #fff;">
+                                                                                            <span style="font-size:30px;">
+                                                                                                    {% if type == 'customer' %}
+                                                                                                    <strong>Thank You For Your Order!</strong2>
+                                                                                                    {% else %}
+                                                                                                        {% if order.payment == 'Paystack' %}
+                                                                                                            <strong>New Order (Paid)!</strong>
+                                                                                                        {% else %}
+                                                                                                            <h2>New Order (Pending)!</h2>
+                                                                                                        {% endif %}
+                                                                                                    {% endif %}
+                                                                                            </span><br></h2>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                {% if type == 'customer' %}
+                                                                                <td class="esd-block-text es-p10l" align="center">
+                                                                                    {{message | raw}}
+                                                                                </td>
+                                                                                {% else %}
+                                                                                <td class="esd-block-text es-p10l" align="center">
+                                                                                       By <br> {{order.user | raw}}
+                                                                                    </td>
+                                                                                {% endif %}
+                                                                            </tr>
+                                                                            {% if type != 'customer' %}
+                                                                            <tr>
+                                                                                <td class="esd-block-button es-p15t es-p15b es-p10r es-p10l" align="center">
+                                                                                    <span class="es-button-border" style="border-radius: 20px; background: rgb(25, 25, 25) none repeat scroll 0% 0%; border-style: solid; border-color: rgb(44, 181, 67); border-width: 0px;">
+                                                                                        <a href="{{backorderLink}}" class="es-button" target="_blank" style="border-radius: 20px; font-family: lucida sans unicode,lucida grande,sans-serif; font-weight: normal; font-size: 18px; border-width: 10px 35px; background: rgb(25, 25, 25) none repeat scroll 0% 0%; border-color: rgb(25, 25, 25); color: rgb(255, 255, 255);">View order details</a>
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            {% endif %}
+                                                                        </tbody>
+                                                                    </table>
                                                                 </td>
                                                             </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="esd-structure es-p15t es-p10b es-p10r es-p10l" style="background-color: rgb(248, 248, 248);" esd-general-paddings-checked="false" bgcolor="#f8f8f8" align="left">
+                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                        <tbody>
                                                             <tr>
-                                                                <td class="esd-block-text es-p25t" align="center">
-                                                                    <span style="color: #ffffff; font-size: 24px;">Bank:</span>
-                                                                </td>
-                                                                <td class="esd-block-text es-p25t" align="center">
-                                                                    <span style="color: #ffffff; font-size: 24px;">Access Bank.</span>
+                                                                <td class="esd-container-frame" width="580" valign="top" align="center">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="center">
+                                                                                    <h2 style="color: rgb(25, 25, 25);">Items ordered<br></h2>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
                                                                 </td>
                                                             </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            {% for item in order.items %}
+                                            <tr>
+                                                <td class="esd-structure es-p25t es-p5b es-p20r es-p20l" esd-general-paddings-checked="false" style="background-color: rgb(248, 248, 248);" bgcolor="#f8f8f8" align="left">
+                                                    <!--[if mso]><table width="560" cellpadding="0" cellspacing="0"><tr><td width="270" valign="top"><![endif]-->
+                                                    <table class="es-left" cellspacing="0" cellpadding="0" align="left">
+                                                        <tbody>
                                                             <tr>
-                                                                <td class="esd-block-text es-p25t" align="center">
-                                                                    <span style="color: #ffffff; font-size: 24px;">Account Name:</span>
-                                                                </td>
-                                                                <td class="esd-block-text es-p25t" align="center">
-                                                                    <span style="color: #ffffff; font-size: 24px;">Butterbakes cakes.</span>
+                                                                <td class="es-m-p20b esd-container-frame" width="270" align="left">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-image" align="center">
+                                                                                    <a target="_blank">
+                                                                                        <img class="adapt-img" src="{{item.image | raw}}" alt="{{item.name}} image" width="103">
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
                                                                 </td>
                                                             </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <!--[if mso]></td><td width="20"></td><td width="270" valign="top"><![endif]-->
+                                                    <table class="es-right" cellspacing="0" cellpadding="0" align="right">
+                                                        <tbody>
                                                             <tr>
-                                                                <td class="esd-block-text es-p25t" align="center">
-                                                                    <span style="color: #ffffff; font-size: 24px;">Account Number: </span>
+                                                                <td class="esd-container-frame" width="270" align="left">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="left">
+                                                                                    <p>
+                                                                                        <span style="font-size:16px;">
+                                                                                            <strong style="line-height: 150%;">{{item.name}}</strong></span></p>
+                                                                                    <p>{{item.options | raw}}</p>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p20t" align="left">
+                                                                                    <p>
+                                                                                        <span style="font-size:15px;">
+                                                                                            <strong style="line-height: 150%;">Item Price:</strong>
+                                                                                            N{{item.amount}}</span></p>
+                                                                                    <p>
+                                                                                        <span style="font-size:15px;">
+                                                                                            <strong>Qty:
+                                                                                            </strong>{{item.quantity}}</span>
+                                                                                    </p>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
                                                                 </td>
-                                                                <td class="esd-block-text es-p25t" align="center">
-                                                                    <span style="color: #ffffff; font-size: 24px;">0789221351.</span>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <!--[if mso]></td></tr></table><![endif]-->
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <tr>
+                                                <td class="esd-structure es-p10t es-p10b es-p10r es-p10l" style="background-color: rgb(248, 248, 248);" esd-general-paddings-checked="false" bgcolor="#f8f8f8" align="left">
+                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="esd-container-frame" width="580" valign="top" align="center">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-spacer es-p20t es-p20b es-p10r es-p10l" bgcolor="#f8f8f8" align="center">
+                                                                                    <table width="100%" height="100%" cellspacing="0" cellpadding="0" border="0">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="border-bottom: 1px solid rgb(25, 25, 25); background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%; height: 1px; width: 100%; margin: 0px;"></td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p15b" align="center">
+                                                                                    <table class="cke_show_border" width="240" height="101" cellspacing="1" cellpadding="1" border="0">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td>
+                                                                                                    <strong>Subtotal:</strong>
+                                                                                                </td>
+                                                                                                <td style="text-align: right;">N{{order.subtotal}}</td>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <td>
+                                                                                                    <strong>Delivery Cost:</strong>
+                                                                                                </td>
+                                                                                                <td style="text-align: right;">N{{order.shipping}}</td>
+                                                                                            </tr>
+                                                                                            {% if order.discount %}
+                                                                                            <tr>
+                                                                                                <td>
+                                                                                                    <strong>Discount:</strong>
+                                                                                                </td>
+                                                                                                <td style="text-align: right;">-N{{order.discount}}</td>
+                                                                                            </tr>
+                                                                                            {% endif %}
+                                                                                            <tr>
+                                                                                                <td>
+                                                                                                    <span style="font-size: 18px; line-height: 200%;">
+                                                                                                        <strong>Order Total:</strong></span></td>
+                                                                                                <td style="text-align: right;">
+                                                                                                    <span style="font-size: 18px; line-height: 200%;">
+                                                                                                        <strong>N{{order.total}}</strong>
+                                                                                                    </span><br></td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="esd-structure es-p15t es-p10b es-p10r es-p10l" style="background-color: rgb(238, 238, 238);" esd-general-paddings-checked="false" bgcolor="#eeeeee" align="left">
+                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="esd-container-frame" width="580" valign="top" align="center">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="center">
+                                                                                    <h2 style="color: rgb(25, 25, 25);">Payment & Shipping Info</h2>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="esd-structure es-p10t es-p30b es-p20r es-p20l" esd-general-paddings-checked="false" style="background-color: rgb(238, 238, 238);" bgcolor="#eeeeee" align="left">
+                                                    <!--[if mso]><table width="560" cellpadding="0" cellspacing="0"><tr><td width="270" valign="top"><![endif]-->
+                                                    <table class="es-left" cellspacing="0" cellpadding="0" align="left">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="es-m-p20b esd-container-frame" width="270" align="left">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p10t es-p10b" align="left">
+                                                                                    <h3 style="color: rgb(36, 36, 36);">Payment details</h3>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="left">
+                                                                                    {% if order.payment == 'Transfer' and type == 'customer' %}                                                                                    
+                                                                                    <p>
+                                                                                            <strong>Payment Method:</strong>
+                                                                                            Bank Transfer</p>
+                                                                                    <p>
+                                                                                        <strong>Bank:</strong>
+                                                                                        Access Bank</p>
+                                                                                    <p>
+                                                                                        <strong>Account №:</strong>
+                                                                                        0789221351</p>
+                                                                                    <p>
+                                                                                        <strong>Account Name:</strong>
+                                                                                        Butterbakes Cakes</p>
+                                                                                    {% else %}
+                                                                                    <p>
+                                                                                            <strong>Payment Method:</strong>
+                                                                                            Paystack</p>
+                                                                                    <p>
+                                                                                            <strong>Reference No:</strong>
+                                                                                            {{order.reference}}</p>
+                                                                                    <p>
+                                                                                            <strong>Payment Status:</strong>
+                                                                                            {{order.status}}</p>
+                                                                                    {% endif %}
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <!--[if mso]></td><td width="20"></td><td width="270" valign="top"><![endif]-->
+                                                    <table class="es-right" cellspacing="0" cellpadding="0" align="right">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="esd-container-frame" width="270" align="left">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p10t es-p10b" align="left">
+                                                                                    <h3 style="color: rgb(36, 36, 36);">Delivery/Pickup Address</h3>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="left">
+                                                                                    <p>Location: {{order.deliveryAddress  | raw }}</p>
+                                                                                    <p>{{order.deliveryDate | raw}}</p>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <!--[if mso]></td></tr></table><![endif]-->
+                                                </td>
+                                            </tr>
+                                            {% if type == 'customer' %}
+                                            <tr>
+                                                <td class="esd-structure es-p25t es-p30b es-p20r es-p20l" esd-general-paddings-checked="false" style="background-color: rgb(248, 248, 248);" bgcolor="#f8f8f8" align="left">
+                                                    <!--[if mso]><table width="560" cellpadding="0" cellspacing="0"><tr><td width="270" valign="top"><![endif]-->
+                                                    <table class="es-left" cellspacing="0" cellpadding="0" align="left">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="es-m-p20b esd-container-frame" width="270" align="left">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p10b" align="center">
+                                                                                    <h3 style="color: rgb(36, 36, 36);">We're here to help</h3>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="center">
+                                                                                    <p style="line-height: 150%; color: rgb(36, 36, 36);">Call +234 814 975 0282 or
+                                                                                        <a href="{{complaintLink}}" target="_blank">visit us online</a>
+                                                                                    </p>
+                                                                                    <p style="line-height: 150%; color: rgb(36, 36, 36);">for expert assistance.</p>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <!--[if mso]></td><td width="20"></td><td width="270" valign="top"><![endif]-->
+                                                    <table class="es-right" cellspacing="0" cellpadding="0" align="right">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="esd-container-frame" width="270" align="left">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p10b" align="center">
+                                                                                    <h3 style="color: rgb(36, 36, 36);">Our guarantee</h3>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="center">
+                                                                                    <p style="line-height: 150%; color: rgb(36, 36, 36);">Your satisfaction is 100% guaranteed.</p>
+                                                                                    <p style="line-height: 150%; color: rgb(36, 36, 36);">See our
+                                                                                        <a href="{{tosLink}}" target="_blank">Returns and Exchanges policy.</a>
+                                                                                    </p>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <!--[if mso]></td></tr></table><![endif]-->
+                                                </td>
+                                            </tr>                                            
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    {% if type == 'customer' %}
+                    <table class="es-footer" cellspacing="0" cellpadding="0" align="center">
+                        <tbody>
+                            <tr>
+                                <td class="esd-stripe" align="center">
+                                    <table class="es-footer-body" width="600" cellspacing="0" cellpadding="0" align="center">
+                                        <tbody>
+                                            <tr>
+                                                <td class="esd-structure es-p20" esd-general-paddings-checked="false" align="left">
+                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="esd-container-frame" width="560" valign="top" align="center">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="esd-block-social es-p10t es-p20b" align="center">
+                                                                                    <a target="_blank">
+                                                                                        <img class="adapt-img" src="{{logo}}" alt="BBC Logo" width="105">
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="center">
+                                                                                    <p>
+                                                                                        <strong>
+                                                                                            <a target="_blank" href="{{store}}" style="line-height: 150%;">Browse all products</a>&nbsp;</strong>•<strong>
+                                                                                            <a target="_blank" href="{{categories}}" style="line-height: 150%;">all categories</a>
+                                                                                        </strong><br></p>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p20t es-p20b" align="center">
+                                                                                    <p style="line-height: 120%;">15a, Thomas Salako Street,<br></p>
+                                                                                    <p style="line-height: 120%;">Ogba, Lagos</p>
+                                                                                    <p style="line-height: 120%;">+234 814 975 0282</p>
+                                                                                    <p style="line-height: 120%;">butterbakescakes@gmail.com</p>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text" align="center">
+                                                                                    <p>
+                                                                                        <strong>
+                                                                                            <a target="_blank" href="{{contactLink}}" style="line-height: 150%;">Contact Us</a>
+                                                                                            •
+                                                                                            <a target="_blank" href="{{complaintLink}}" style="line-height: 150%;">Customer Support</a>
+                                                                                        </strong><br></p>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="esd-block-text es-p10t es-p10b" align="center">
+                                                                                    <p>
+                                                                                        <em>
+                                                                                            <span style="font-size: 11px; line-height: 150%;">You are receiving this email because you have visited our site or asked us about regular newsletter.</span></em>
+                                                                                    </p>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -305,9 +442,9 @@
                             </tr>
                         </tbody>
                     </table>
+                    {% endif %}
                 </td>
             </tr>
         </tbody>
     </table>
-{% endif %}
 {% endblock %}

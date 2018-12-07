@@ -10,6 +10,11 @@ use Directus\Database\TableGatewayFactory;
 // Slim App
 $app = Bootstrap::get('app');
 
+require_once BASE_PATH.'/inc/cache.php';
+    
+// setup 'default' cache
+$cache = new Cache();
+
 require_once BASE_PATH.'/inc/functions.php';
 
 // Submit Order endpoint
@@ -36,7 +41,7 @@ $app->post(
                 'delivery_time' => ArrayUtils::get($payload, 'delivery_time'),
                 'delivery_date' => ArrayUtils::get($payload, 'delivery_date'),
                 'express_delivery' => ArrayUtils::get($payload, 'express')? "1" : "0",
-                'status' => 'created',
+                'status' => '1',
                 'total' => getTotal($payload)
             ];
             //get address from request
@@ -67,7 +72,8 @@ $app->post(
                         "quantity" => $row['quantity'],
                         "price" => $row['price'], //don't use client-side quoted price, calculate price using given options
                         "sub_total" => floatval($row['price']) * intval($row['quantity']),
-                        'options' => getProductOptions($row['productid'], $row['options'])
+                        'options' => getProductOptions($row['productid'], $row['options']),
+                        "image" => getProductImage($row['productid'])
                     ];
                     $entriesService->createEntry($table, $record, $params);
                 }
@@ -122,7 +128,7 @@ $app->post(
                 'delivery_time' => ArrayUtils::get($payload, 'delivery_time'),
                 'delivery_date' => ArrayUtils::get($payload, 'delivery_date'),
                 'express_delivery' => ArrayUtils::get($payload, 'express')? "1" : "0",
-                'status' => 'created',
+                'status' => '1',
                 'reference' => uniqid(),
                 'total' => getTotal($payload)
             ];
@@ -149,7 +155,8 @@ $app->post(
                     "quantity" => $row['quantity'],
                     "price" => $row['price'], //don't use client-side quoted price, calculate price using given options
                     "sub_total" => floatval($row['price']) * intval($row['quantity']),
-                    'options' => getProductOptions($row['productid'], $row['options'])
+                    'options' => getProductOptions($row['productid'], $row['options']),
+                    "image" => getProductImage($row['productid'])
                 ];
                 $entriesService->createEntry($table, $record, $params);
             }
@@ -381,7 +388,7 @@ $app->post(
         }
         
         if (ArrayUtils::get($payload, 'confirm') && ArrayUtils::get($payload, 'payment') == "Transfer") {
-            $record = ['status' => 'pending', 'id' => $id];
+            $record = ['status' => '2', 'id' => $id];
             $row = $tableGateway->updateRecord($record, 1);
             ArrayUtils::set($order, 'status', 'pending');
             sendConfirmation($id);
@@ -455,7 +462,7 @@ $app->post(
                     if ($order_amount == $paid_amount && $payment_reference == $order_reference) {
                         $table = 'orders';
                         $tableGateway = new TableGateway($table, $ZendDb, $acl);
-                        $record = ['status' => 'processing', 'id' => $id];
+                        $record = ['status' => '3', 'id' => $id];
                         $row = $tableGateway->updateRecord($record, 1);
                         ArrayUtils::set($order, 'status', 'processing');
                         sendConfirmation($id);

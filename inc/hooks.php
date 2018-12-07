@@ -7,24 +7,26 @@ return [
         $tableName = $TableGateway->getTable();
         if ($tableName == 'enquiries') {
             //send enquiry email
-            $to      = $record['email'];
+            $to      = 'butterbakescakes@gmail.com';
             $subject = $record['subject'];
             $message = $record['message'];
             $headers = array(
                 'From' => 'hello@butterbakescakes.com',
-                'Reply-To' => 'hello@butterbakescakes.com',
+                'CC' => $record['email'],
+                'Reply-To' => $record['email'],
                 'X-Mailer' => 'PHP/' . phpversion()
             );
 
             mail($to, $subject, $message, $headers);
         } elseif ($tableName == 'issues') {
             //send issue email
-            $to      = $record['email'];
+            $to      = 'butterbakescakes@gmail.com';
             $subject = $record['subject'];
             $message = $record['description'];
             $headers = array(
                 'From' => 'hello@butterbakescakes.com',
-                'Reply-To' => 'hello@butterbakescakes.com',
+                'CC' => $record['email'],
+                'Reply-To' => $record['email'],
                 'X-Mailer' => 'PHP/' . phpversion()
             );
 
